@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,7 +14,8 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     debug: bool = False
     host: str = "0.0.0.0"
-    port: int = 8000
+    # Render (and other platforms) inject PORT; fall back to 8000 for local dev.
+    port: int = int(os.getenv("PORT", "8000"))
     # Comma-separated in env, e.g. CORS_ORIGINS=http://localhost:3000,https://example.com
     # Defaults cover the Next.js dev server (3000) and common alt ports.
     cors_origins: str = (
