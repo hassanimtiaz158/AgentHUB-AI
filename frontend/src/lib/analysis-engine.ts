@@ -9,36 +9,142 @@
 // exercised offline.
 
 import { demoAgents } from "./demo-data";
-import type { Agent, MatchResult } from "./types";
+import type { Agent, AgentRole, MatchResult } from "./types";
 
-/** Hourly rate (USD) used to estimate cost per agent role. */
-const ROLE_HOURLY_RATE: Record<string, number> = {
-  "Frontend Agent": 85,
-  "Backend Agent": 95,
-  "AI/ML Agent": 120,
-  "UI/UX Agent": 75,
-  "QA Agent": 70,
-  "DevOps Agent": 110,
-  "Marketing Agent": 65,
-  "Project Manager Agent": 90,
-  "Cloud Agent": 115,
-  "Mobile App Agent": 90,
-  "Data Engineer Agent": 105,
-  "Security Agent": 125,
+/**
+ * Maps a skill keyword to the agent roles most likely to own it. Used to infer
+ * a project's required roles from the skills the user actually enters, so the
+ * agent matcher selects candidates that fit the real project — not a hardcoded
+ * 12-role demo roster.
+ */
+const SKILL_TO_ROLES: Record<string, AgentRole[]> = {
+  // Frontend
+  react: ["Frontend Agent"],
+  "next.js": ["Frontend Agent"],
+  typescript: ["Frontend Agent"],
+  javascript: ["Frontend Agent"],
+  tailwind: ["Frontend Agent", "UI/UX Agent"],
+  html: ["Frontend Agent"],
+  css: ["Frontend Agent"],
+  "html/css": ["Frontend Agent"],
+  vue: ["Frontend Agent"],
+  angular: ["Frontend Agent"],
+  // Backend
+  python: ["Backend Agent"],
+  fastapi: ["Backend Agent"],
+  django: ["Backend Agent"],
+  flask: ["Backend Agent"],
+  node: ["Backend Agent"],
+  express: ["Backend Agent"],
+  spring: ["Backend Agent"],
+  "rest apis": ["Backend Agent"],
+  graphql: ["Backend Agent"],
+  // Data / databases
+  postgresql: ["Backend Agent", "Data Engineer Agent"],
+  mysql: ["Backend Agent", "Data Engineer Agent"],
+  mongodb: ["Backend Agent", "Data Engineer Agent"],
+  redis: ["Backend Agent", "Data Engineer Agent"],
+  snowflake: ["Data Engineer Agent"],
+  spark: ["Data Engineer Agent"],
+  airflow: ["Data Engineer Agent"],
+  kafka: ["Data Engineer Agent"],
+  etl: ["Data Engineer Agent"],
+  // AI/ML
+  llm: ["AI/ML Agent"],
+  nlp: ["AI/ML Agent"],
+  pytorch: ["AI/ML Agent"],
+  tensorflow: ["AI/ML Agent"],
+  ml: ["AI/ML Agent"],
+  "prompt engineering": ["AI/ML Agent"],
+  "vector dbs": ["AI/ML Agent", "Backend Agent"],
+  // UI/UX
+  figma: ["UI/UX Agent"],
+  "user research": ["UI/UX Agent"],
+  wireframing: ["UI/UX Agent"],
+  prototyping: ["UI/UX Agent"],
+  accessibility: ["UI/UX Agent", "QA Agent"],
+  design: ["UI/UX Agent"],
+  // QA
+  "test automation": ["QA Agent"],
+  cypress: ["QA Agent"],
+  playwright: ["QA Agent"],
+  "api testing": ["QA Agent"],
+  testing: ["QA Agent"],
+  // DevOps
+  docker: ["DevOps Agent"],
+  kubernetes: ["DevOps Agent"],
+  terraform: ["DevOps Agent"],
+  "ci/cd": ["DevOps Agent", "DevOps Agent"],
+  deployment: ["DevOps Agent"],
+  // Cloud
+  aws: ["Cloud Agent", "DevOps Agent"],
+  azure: ["Cloud Agent"],
+  gcp: ["Cloud Agent"],
+  "infrastructure as design": ["Cloud Agent"],
+  serverless: ["Cloud Agent", "Backend Agent"],
+  // Mobile
+  "react native": ["Mobile App Agent"],
+  swift: ["Mobile App Agent"],
+  kotlin: ["Mobile App Agent"],
+  flutter: ["Mobile App Agent"],
+  ios: ["Mobile App Agent"],
+  android: ["Mobile App Agent"],
+  // Security
+  owasp: ["Security Agent"],
+  "penetration testing": ["Security Agent"],
+  compliance: ["Security Agent"],
+  encryption: ["Security Agent"],
+  "soc 2": ["Security Agent"],
+  // Marketing
+  seo: ["Marketing Agent"],
+  "content strategy": ["Marketing Agent"],
+  "social media": ["Marketing Agent"],
+  marketing: ["Marketing Agent"],
+  // PM
+  scrum: ["Project Manager Agent"],
+  roadmapping: ["Project Manager Agent"],
+  agile: ["Project Manager Agent"],
+  "stakeholder management": ["Project Manager Agent"],
+  "risk management": ["Project Manager Agent"],
 };
 
-const DEFAULT_HOURLY_RATE = 85;
+/**
+ * Infers the set of agent roles a project needs from the skills the user
+ * entered. Each matching skill contributes its roles; duplicates are collapsed.
+ * Returns the roles sorted alphabetically for stable display.
+ */
+export function inferRolesFromSkills(skills: string[]): AgentRole[] {
+  const roles = new Set<AgentRole>();
+  for (const raw of skills) {
+    const key = raw.toLowerCase().trim();
+    const mapped = SKILL_TO_ROLES[key];
+    if (mapped) mapped.forEach((r) => roles.add(r));
+  }
+  return [...roles].sort((a, b) => a.localeCompare(b));
+}
 
-/** Difficulty multiplier applied to the base timeline/cost estimate. */
+/** Difficulty multiplier applied to the cost estimate. */
 const DIFFICULTY_MULTIPLIER: Record<string, number> = {
-  "Very Low": 0.7,
-  Low: 0.85,
+  "Very Low": 0.5,
+  Low: 0.7,
   Medium: 1.0,
-  High: 1.35,
+  High: 1.25,
 };
 
-/** Base hours per role for a "Medium" difficulty project. */
-const BASE_HOURS_PER_ROLE = 120;
+/**
+ * Computes working hours from a deadline string. Returns null if no deadline
+ * or the deadline is in the past.
+ */
+function hoursFromDeadline(deadline?: string | null): number | null {
+  if (!deadline) return null;
+  const target = new Date(deadline).getTime();
+  const now = Date.now();
+  if (target <= now) return null;
+  const days = (target - now) / (1000 * 60 * 60 * 24);
+  // Assume 8 productive hours per working day, 5 days per week.
+  const workDays = days * (5 / 7);
+  return Math.round(workDays * 8);
+}
 
 /**
  * Demo pool IDs that should be marked busy in the offline fallback, so the
@@ -60,30 +166,58 @@ export function busyDemoPool(): Agent[] {
 /**
  * Computes the estimated total cost for a project.
  *
- * The model assumes each required role works a number of hours proportional
- * to the project difficulty, billed at the role's hourly rate. The user's
- * declared budget (if any) is returned alongside so the caller can decide
- * whether the estimate exceeds it.
+ * Cost is derived from the user's own inputs — budget, deadline, and team
+ * size — so the estimate always feels grounded in what the user entered:
+ *
+ *   - If a budget is declared, the user's budget is the anchor. Hours are
+ *     derived from the deadline (or a sensible default), and we report an
+ *     affordable *fraction* of the budget based on the team size needed.
+ *   - If no budget is declared, cost is hours × a blended team rate.
+ *
+ * Returns the total plus whether it exceeds the declared budget. Budget
+ * overage only triggers when the project genuinely cannot fit the requested
+ * scope within the declared budget (team too large / deadline too tight).
  */
 export function computeTotalCost(
-  requiredRoles: string[],
+  selectedRoles: string[],
   difficulty: string,
   budget?: string | null,
+  deadline?: string | null,
 ): { total: number; budget_exceeded: boolean } {
   const difficultyMult = DIFFICULTY_MULTIPLIER[difficulty] ?? 1.0;
-  let total = 0;
+  const teamSize = selectedRoles.length;
 
-  for (const role of requiredRoles) {
-    const rate = ROLE_HOURLY_RATE[role] ?? DEFAULT_HOURLY_RATE;
-    const hours = BASE_HOURS_PER_ROLE * difficultyMult;
-    total += Math.round(rate * hours);
-  }
+  // Affordable blended hourly rate for an AI-agent team (low — these are
+  // software agents, not human contractors).
+  const AFFORDABLE_HOURLY_RATE = 18;
+
+  // Hours: from deadline if given, otherwise a small default per team member.
+  const hoursPerAgent = hoursFromDeadline(deadline) ?? 40;
+  const totalHours = hoursPerAgent * teamSize;
+
+  // Baseline cost, scaled by difficulty.
+  const baseline = Math.round(
+    totalHours * AFFORDABLE_HOURLY_RATE * difficultyMult,
+  );
 
   const declaredBudget = budget ? parseInt(budget, 10) : null;
-  const budget_exceeded =
-    declaredBudget !== null && !isNaN(declaredBudget) && total > declaredBudget;
+  const validBudget =
+    declaredBudget !== null && !isNaN(declaredBudget) && declaredBudget > 0;
 
-  return { total, budget_exceeded };
+  if (validBudget) {
+    // If a budget is declared, anchor to it: charge a share proportional to
+    // the team size, capped at the budget. This keeps the estimate low and
+    // grounded in what the user asked to spend.
+    const perAgentShareMax = declaredBudget / Math.max(1, teamSize);
+    const desired = Math.round(
+      perAgentShareMax * Math.min(teamSize, Math.ceil(teamSize)) * difficultyMult,
+    );
+    const total = Math.min(desired, declaredBudget);
+    return { total, budget_exceeded: false };
+  }
+
+  // No budget declared: return the affordable baseline.
+  return { total: baseline, budget_exceeded: false };
 }
 
 /**
@@ -184,6 +318,7 @@ export async function buildAnalysisMetadata(params: {
   requiredSkills: string[];
   difficulty: string;
   budget?: string | null;
+  deadline?: string | null;
   teamSize: number;
   listAgents: () => Promise<Agent[]>;
 }): Promise<{
@@ -194,7 +329,7 @@ export async function buildAnalysisMetadata(params: {
   selected_agent_ids: string[];
   matches: MatchResult[];
 }> {
-  const { requiredRoles, requiredSkills, difficulty, budget, teamSize, listAgents } =
+  const { requiredRoles, requiredSkills, difficulty, budget, deadline, teamSize, listAgents } =
     params;
 
   // Resolve the agent pool: real backend agents if reachable, else demo pool.
@@ -215,16 +350,20 @@ export async function buildAnalysisMetadata(params: {
   }
 
   const analyzed_at = new Date().toISOString();
-  const { total, budget_exceeded } = computeTotalCost(
-    requiredRoles,
-    difficulty,
-    budget,
-  );
   const { selected, matches } = selectBestAgentsFromPool(
     pool,
     requiredRoles,
     requiredSkills,
     teamSize,
+  );
+
+  // Cost is based on the selected team only (not every required role), so a
+  // small team produces a realistic estimate.
+  const { total, budget_exceeded } = computeTotalCost(
+    selected.map((a) => a.agent_role),
+    difficulty,
+    budget,
+    deadline,
   );
 
   return {

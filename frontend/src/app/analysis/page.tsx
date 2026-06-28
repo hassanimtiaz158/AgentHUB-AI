@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Card, LoadingState, ErrorState, Badge, StatTile } from "@/components/ui";
 import { DemoProgress } from "@/components/DemoProgress";
 import { analyzeProject, createProject } from "@/lib/api";
-import { demoAnalysis, agentRoleLine } from "@/lib/demo-data";
+import { demoAnalysis, agentRoleLine, buildDemoMatches } from "@/lib/demo-data";
+import { computeTotalCost } from "@/lib/analysis-engine";
 import { useProjectStore } from "@/lib/store";
 import { useDemoPlayer } from "@/lib/demo-player";
 import type { Analysis, Project } from "@/lib/types";
@@ -32,6 +33,17 @@ export default function AnalysisPage({
     let active = true;
     const projectId = id ?? store.project?.id;
     if (!projectId) return;
+
+    // If we already have an analysis for this project (e.g. the post-project
+    // page computed total_cost/selected agents), keep it instead of
+    // overwriting with the bare demo analysis from analyzeProject().
+    if (store.analysis && store.analysis.project_id === projectId) {
+      setAnalysis(store.analysis);
+      if (store.project?.id === projectId) setProjectData(store.project);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     (async () => {
       // Ensure we have a project; if id not in store, create a quick one.
@@ -58,11 +70,22 @@ export default function AnalysisPage({
       setLoading(false);
       if (res.usingDemoFallback) setDemoFallback(true);
       if (res.data) {
-        setAnalysis(res.data);
+        // Preserve roles/tasks that were inferred from the user's actual
+        // entered skills (stored by the post-project page) instead of
+        // overwriting with the hardcoded demo roster.
+        const preserved = store.analysis?.project_id === currentProject.id
+          ? {
+              required_roles: store.analysis.required_roles,
+              task_breakdown: store.analysis.task_breakdown,
+              recommended_skills: store.analysis.recommended_skills,
+            }
+          : undefined;
+        const merged = preserved
+          ? { ...res.data, ...preserved }
+          : res.data;
+        setAnalysis(merged);
         setProjectData(currentProject);
-        store.setAnalysis(res.data);
-        // In demo mode, the DemoProvider auto-advances to matches.
-        // Nothing to do here — the player owns the timer.
+        store.setAnalysis(merged);
       } else if (res.error) {
         setError(res.error);
       }
@@ -80,6 +103,16 @@ export default function AnalysisPage({
     if (d === "Low") return "cyan";
     return "green";
   }, [analysis?.difficulty]);
+
+  // The agents actually selected for this project — only these appear in the
+  // task breakdown (no longer the full hardcoded demo roster).
+  const selectedAgents = useMemo(() => {
+    const ids = analysis?.selected_agent_ids ?? [];
+    if (!ids.length) return [];
+    return (store.matches?.matches ?? buildDemoMatches().matches).filter((m) =>
+      ids.includes(m.agent_id),
+    );
+  }, [analysis?.selected_agent_ids, store.matches]);
 
   if (loading && !analysis) return <LoadingState label="Analyzing project…" />;
   if (error && !analysis)
@@ -279,21 +312,41 @@ export default function AnalysisPage({
       </div>
 
       <Card>
-        <SectionTitle title="Task breakdown" eyebrow="Preview" />
-        <div className="grid sm:grid-cols-2 gap-3">
-          {analysis.task_breakdown.map((t, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-3 rounded-lg border border-[var(--border-subtle)]"
-            >
-              <div>
-                <div className="text-sm font-medium">{t.role} works on: {agentRoleLine(t.role)} of {project?.title ?? "AI-powered analytics platform"}</div>
-                <div className="text-xs text-[color:var(--text-muted)]">{t.title}</div>
+        <SectionTitle
+          title="Task breakdown"
+          eyebrow={`${selectedAgents.length} agents selected for this project`}
+        />
+        {selectedAgents.length === 0 ? (
+          <div className="text-xs text-[color:var(--text-muted)]">
+            No agents were selected for this project.
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-3">
+            {selectedAgents.map((m) => (
+              <div
+                key={m.agent_id}
+                className="p-3 rounded-lg border border-[var(--border-subtle)]"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-md bg-purple-500/20 text-purple-300 text-xs flex items-center justify-center font-semibold">
+                    {m.agent_name.split(" ")[0][0]}
+                  </span>
+                  <span className="text-sm font-medium">{m.agent_name.replace(" Agent", "")}</span>
+                  <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+                    m.availability === "busy"
+                      ? "bg-amber-500/15 text-amber-300"
+                      : "bg-emerald-500/15 text-emerald-300"
+                  }`}>
+                    {m.availability}
+                  </span>
+                </div>
+                <div className="text-xs text-[color:var(--text-secondary)]">
+                  Works on: {agentLine(m.agent_role)} of {project?.title ?? "this project"}
+                </div>
               </div>
-              <Badge tone="neutral">{t.status}</Badge>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -315,6 +368,11 @@ export default function AnalysisPage({
       </div>
     </div>
   );
+}
+
+/** Short "works on:" domain line for a role, used in the task breakdown. */
+function agentLine(role: string): string {
+  return agentRoleLine(role);
 }
 
 function SectionTitle({ title, eyebrow }: { title: string; eyebrow?: string }) {

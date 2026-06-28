@@ -9,7 +9,7 @@ import { DemoProgress } from "@/components/DemoProgress";
 import { DEMO_BRIEF, DEMO_PROJECT_ID } from "@/lib/demo-flow";
 import { createProject, listAgents } from "@/lib/api";
 import { demoAnalysis } from "@/lib/demo-data";
-import { buildAnalysisMetadata } from "@/lib/analysis-engine";
+import { buildAnalysisMetadata, inferRolesFromSkills } from "@/lib/analysis-engine";
 import { useProjectStore } from "@/lib/store";
 import type { Project } from "@/lib/types";
 
@@ -91,20 +91,26 @@ export default function PostProjectPage({
     // best agents for this project from the real registered pool (falling back
     // to the demo pool with some busy agents when the backend is offline).
     const agentRes = await listAgents();
+    const requiredRoles = inferRolesFromSkills(p.required_skills);
     const meta = await buildAnalysisMetadata({
-      requiredRoles: demoAnalysis.required_roles,
+      requiredRoles,
       requiredSkills: p.required_skills,
       difficulty: demoAnalysis.difficulty,
       budget: p.budget,
+      deadline: p.deadline,
       teamSize: p.team_size,
       listAgents: async () => agentRes.data ?? [],
     });
 
     // Persist the enriched analysis + selected matches so the analysis page
-    // and downstream pages (matches, workspace) can render them.
+    // and downstream pages (matches, workspace) can render them. Use the roles
+    // inferred from the user's actual skills (not the hardcoded demo roster)
+    // so the whole downstream reflects the real project brief.
     store.setAnalysis({
       ...demoAnalysis,
       project_id: p.id,
+      required_roles: requiredRoles,
+      recommended_skills: p.required_skills,
       analyzed_at: meta.analyzed_at,
       total_cost: meta.total_cost,
       budget_exceeded: meta.budget_exceeded,

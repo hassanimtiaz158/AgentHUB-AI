@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, Badge, EmptyState, LoadingState, Spinner } from "@/components/ui";
@@ -28,21 +28,29 @@ export default function TaskBoardPage({
   const isDemo = !!demo;
   const projectId = id ?? store.project?.id ?? "demo";
 
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(store.tasks);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setTasks(store.tasks.length ? store.tasks : demoTasks);
+    // Seed from store, or the demo tasks on first ever load.
+    if (store.tasks.length) {
+      setTasks(store.tasks);
+    } else {
+      setTasks(demoTasks);
+    }
     setLoading(false);
-    return () => {
-      active = false;
-    };
   }, []);
+
+  // Keep the global store in sync so the standup (and other pages) see the
+  // live task board — including moves, adds, and deletes.
+  const storeRef = useRef(store);
+  storeRef.current = store;
+  useEffect(() => {
+    store.setTasks(tasks);
+  }, [tasks]);
 
   async function addTask() {
     if (!title.trim()) return;

@@ -76,6 +76,27 @@ export interface Analysis {
 }
 
 // ---------------------------------------------------------------------------
+// Saved project (a project the user has finished the flow for and persisted
+// to the dashboard so they can track progress on it).
+// ---------------------------------------------------------------------------
+export interface SavedProject {
+  id: string;
+  title: string;
+  description: string;
+  required_skills: string[];
+  budget: string;
+  deadline: string | null;
+  team_size: number;
+  status: ProjectStatus;
+  difficulty: string;
+  total_cost: number | null;
+  /** IDs of the agents selected for this project. */
+  selected_agent_ids: string[];
+  tasks: Task[];
+  saved_at: string;
+}
+
+// ---------------------------------------------------------------------------
 // Matching
 // ---------------------------------------------------------------------------
 export interface MatchResult {

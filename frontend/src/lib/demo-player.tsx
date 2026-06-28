@@ -49,7 +49,8 @@ export function DemoProvider({
   const router = useRouter();
   const pathname = usePathname();
   const [step, setStep] = useState(() => stepForPathname(pathname));
-  const [isPlaying, setIsPlaying] = useState(isDemo);
+  // Start paused: don't auto-advance through steps until the user clicks.
+  const [isPlaying, setIsPlaying] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => setStep(stepForPathname(pathname)), [pathname]);

@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { Card, Badge, StatTile, Spinner, ErrorState, LoadingState, EmptyState } from "@/components/ui";
 import { DemoProgress } from "@/components/DemoProgress";
 import { standupSummary } from "@/lib/api";
+import { demoTasks } from "@/lib/demo-data";
 import { useProjectStore } from "@/lib/store";
-import type { Standup } from "@/lib/types";
+import type { SavedProject, Standup } from "@/lib/types";
 
 export default function StandupPage({
   searchParams,
@@ -25,6 +26,7 @@ export default function StandupPage({
   const [regen, setRegen] = useState(false);
   const [demoFallback, setDemoFallback] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -37,6 +39,12 @@ export default function StandupPage({
     if (res.data) {
       setStandup(res.data);
       store.setStandup(res.data);
+      // Ensure the global task list is populated so the stat tiles show real
+      // counts instead of 0 on the first standup visit (before the task board
+      // has been opened).
+      if (!store.tasks.length) {
+        store.setTasks(demoTasks);
+      }
     } else if (res.error) {
       setError(res.error);
     }
@@ -46,6 +54,28 @@ export default function StandupPage({
     if (!standup) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+
+  function saveProject() {
+    if (!store.project || saved) return;
+    const selectedIds = store.analysis?.selected_agent_ids ?? [];
+    const snapshot: SavedProject = {
+      id: store.project.id,
+      title: store.project.title,
+      description: store.project.description,
+      required_skills: store.project.required_skills,
+      budget: store.project.budget,
+      deadline: store.project.deadline,
+      team_size: store.project.team_size,
+      status: "Active",
+      difficulty: store.analysis?.difficulty ?? "Medium",
+      total_cost: store.analysis?.total_cost ?? null,
+      selected_agent_ids: selectedIds,
+      tasks: store.tasks,
+      saved_at: new Date().toISOString(),
+    };
+    store.addProject(snapshot);
+    setSaved(true);
+  }
 
   function copySummary() {
     if (!standup) return;
@@ -139,12 +169,33 @@ export default function StandupPage({
         </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatTile label="Total tasks" value={standup.total_tasks} accent="purple" />
-        <StatTile label="Completed" value={standup.completed} accent="green" />
-        <StatTile label="In progress" value={standup.in_progress} accent="yellow" />
-        <StatTile label="To do" value={standup.todo} accent="blue" />
-      </div>
+      {(() => {
+        // Derive live counts from the actual tasks so the board always
+        // reflects what's on the task board (newly added/moved/deleted tasks
+        // included). Falls back to the standup snapshot only when no tasks
+        // are loaded yet.
+        const live = store.tasks.length
+          ? {
+              total: store.tasks.length,
+              done: store.tasks.filter((t) => t.status === "Done").length,
+              progress: store.tasks.filter((t) => t.status === "In Progress").length,
+              todo: store.tasks.filter((t) => t.status === "Todo").length,
+            }
+          : {
+              total: standup.total_tasks,
+              done: standup.completed,
+              progress: standup.in_progress,
+              todo: standup.todo,
+            };
+        return (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatTile label="Total tasks" value={live.total} accent="purple" />
+            <StatTile label="Completed" value={live.done} accent="green" />
+            <StatTile label="In progress" value={live.progress} accent="yellow" />
+            <StatTile label="To do" value={live.todo} accent="blue" />
+          </div>
+        );
+      })()}
 
       <Card className="gradient-border">
         <div className="text-[11px] uppercase tracking-[0.18em] text-purple-400 mb-2">
@@ -208,21 +259,30 @@ export default function StandupPage({
         <Card className="text-center p-6">
           <h3 className="text-lg font-semibold mb-2">🎉 Demo complete</h3>
           <p className="text-sm text-[color:var(--text-secondary)] mb-4">
-            You&apos;ve walked through the full AgentHub AI flow. Start a real project
-            to see the live backend in action.
+            You&apos;ve walked through the full AgentHub AI flow. Save this project
+            to your dashboard to track its progress.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/post-project"
+          {saved ? (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-sm text-emerald-300">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Project saved to dashboard
+            </div>
+          ) : (
+            <button
+              onClick={saveProject}
               className="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-2"
             >
-              Post a real project
-            </Link>
+              Save project to dashboard
+            </button>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
             <Link
               href="/"
               className="btn-ghost px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center justify-center"
             >
-              Back to home
+              Go to dashboard →
             </Link>
           </div>
         </Card>

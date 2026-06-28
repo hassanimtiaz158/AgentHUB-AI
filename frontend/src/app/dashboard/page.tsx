@@ -6,7 +6,7 @@ import { Card, Badge, StatTile, ScoreRing, LoadingState, EmptyState } from "@/co
 import { demoAgents, demoAnalysis, buildDemoMatches, demoTasks } from "@/lib/demo-data";
 import { healthCheck, listAgents, listTasks } from "@/lib/api";
 import { useProjectStore } from "@/lib/store";
-import type { Agent, Task } from "@/lib/types";
+import type { Agent, SavedProject, Task } from "@/lib/types";
 
 export default function DashboardPage() {
   const store = useProjectStore();
@@ -203,6 +203,29 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Saved projects */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold">Your projects</h2>
+          <span className="text-xs text-[color:var(--text-muted)]">
+            {store.projects.length} saved
+          </span>
+        </div>
+        {store.projects.length === 0 ? (
+          <Card className="p-6 text-center">
+            <p className="text-sm text-[color:var(--text-secondary)]">
+              No projects yet. Run the demo and save your first project to see it here.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {store.projects.map((p) => (
+              <ProjectCard key={p.id} project={p} />
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Quick actions */}
       <div className="card p-5">
         <h2 className="font-semibold mb-4">Quick actions</h2>
@@ -227,5 +250,62 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ProjectCard({ project }: { project: SavedProject }) {
+  const total = project.tasks.length;
+  const done = project.tasks.filter((t) => t.status === "Done").length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-start justify-between mb-2">
+        <h3 className="text-sm font-semibold truncate pr-2">{project.title}</h3>
+        <Badge tone={pct === 100 ? "green" : "yellow"}>
+          {pct === 100 ? "Completed" : "Active"}
+        </Badge>
+      </div>
+      <p className="text-xs text-[color:var(--text-secondary)] line-clamp-2 mb-3 min-h-[32px]">
+        {project.description}
+      </p>
+      <div className="flex flex-wrap gap-1 mb-3">
+        {project.required_skills.slice(0, 3).map((s) => (
+          <span
+            key={s}
+            className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-[var(--border-subtle)] text-[color:var(--text-secondary)]"
+          >
+            {s}
+          </span>
+        ))}
+        {project.required_skills.length > 3 && (
+          <span className="text-[10px] text-[color:var(--text-muted)]">
+            +{project.required_skills.length - 3}
+          </span>
+        )}
+      </div>
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="text-[color:var(--text-muted)]">
+          {done}/{total} tasks
+        </span>
+        <span className="text-[color:var(--text-primary)] font-medium">{pct}%</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-300 ${
+            pct === 100
+              ? "bg-emerald-500"
+              : "bg-gradient-to-r from-purple-500 to-cyan-400"
+          }`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[10px] text-[color:var(--text-muted)]">
+        <span>{project.team_size} agents</span>
+        <span>
+          {project.total_cost ? `$${project.total_cost.toLocaleString()}` : ""}
+        </span>
+      </div>
+    </Card>
   );
 }
