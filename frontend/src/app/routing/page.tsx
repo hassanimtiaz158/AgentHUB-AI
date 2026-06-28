@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRef } from "react";
+import dynamic from "next/dynamic";
 import { Card, Badge, LoadingState, Spinner } from "@/components/ui";
 import { DemoProgress } from "@/components/DemoProgress";
 import { aicooRoute, listAgents, matchAgents } from "@/lib/api";
@@ -13,6 +14,11 @@ import { useProjectStore } from "@/lib/store";
 import { useDemoPlayer } from "@/lib/demo-player";
 import { useToast } from "@/components/Toast";
 import type { Agent, MatchResult } from "@/lib/types";
+
+const Topology3D = dynamic(() => import("@/components/Topology3D"), {
+  ssr: false,
+  loading: () => <LoadingState label="Loading 3D topology…" />,
+});
 
 interface RouteEvent {
   key?: string;
@@ -234,173 +240,13 @@ export default function RoutingPage({
       </div>
 
       <Card>
-        <div className="text-sm font-semibold mb-3">Topology</div>
-        <TopologyVisualization
-          projectName={store.project?.title ?? "Demo project"}
-          matches={matches.slice(0, 6)}
-        />
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-semibold">Topology</div>
+          <span className="text-[10px] text-[color:var(--text-muted)]">drag to rotate · scroll to zoom</span>
+        </div>
+        <Topology3D />
       </Card>
     </div>
   );
 }
 
-function TopologyVisualization({
-  projectName,
-  matches,
-}: {
-  projectName: string;
-  matches: MatchResult[];
-}) {
-  const nodeRadius = 22;
-  const hubRadius = 36;
-  const svgWidth = 520;
-  const svgHeight = 300;
-  const cx = svgWidth / 2;
-  const cy = svgHeight / 2;
-
-  const positions = matches.map((_, i) => {
-    const angle = (i / matches.length) * Math.PI * 2 - Math.PI / 2;
-    const r = 110;
-    return {
-      x: cx + Math.cos(angle) * r,
-      y: cy + Math.sin(angle) * r,
-    };
-  });
-
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[color:var(--bg-elevated)]/40 p-4">
-      <svg
-        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        className="w-full h-auto max-h-[300px]"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <defs>
-          <linearGradient id="hubGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#3b82f6" />
-          </linearGradient>
-          <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.4" />
-          </linearGradient>
-        </defs>
-
-        {/* Connection lines */}
-        {matches.map((m, i) => {
-          const p = positions[i];
-          return (
-            <line
-              key={`line-${m.agent_id}`}
-              x1={cx}
-              y1={cy}
-              x2={p.x}
-              y2={p.y}
-              stroke="url(#lineGrad)"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              opacity={0.6}
-            >
-              <animate
-                attributeName="stroke-dashoffset"
-                from="0"
-                to="-16"
-                dur="2s"
-                repeatCount="indefinite"
-              />
-            </line>
-          );
-        })}
-
-        {/* Hub */}
-        <circle cx={cx} cy={cy} r={hubRadius} fill="url(#hubGrad)" opacity={0.9} />
-        <circle cx={cx} cy={cy} r={hubRadius} fill="none" stroke="#a78bfa" strokeWidth={1} opacity={0.5} />
-        <text
-          x={cx}
-          y={cy - 4}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill="white"
-          fontSize={11}
-          fontWeight={700}
-        >
-          Aicoo
-        </text>
-        <text
-          x={cx}
-          y={cy + 10}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill="rgba(255,255,255,0.7)"
-          fontSize={8}
-        >
-          hub
-        </text>
-
-        {/* Agent nodes */}
-        {matches.map((m, i) => {
-          const p = positions[i];
-          const color =
-            m.match_score >= 80
-              ? "#10b981"
-              : m.match_score >= 50
-              ? "#f59e0b"
-              : "#6366f1";
-          return (
-            <g key={m.agent_id}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={nodeRadius}
-                fill={color}
-                fillOpacity={0.15}
-                stroke={color}
-                strokeWidth={1.5}
-              />
-              <text
-                x={p.x}
-                y={p.y - 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill="white"
-                fontSize={9}
-                fontWeight={600}
-              >
-                {m.agent_name.split(" ")[0]}
-              </text>
-              <text
-                x={p.x}
-                y={p.y + 10}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill="rgba(255,255,255,0.6)"
-                fontSize={7}
-              >
-                {m.match_score}%
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Legend */}
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[color:var(--text-secondary)]">
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-gradient-to-br from-purple-500 to-blue-500" />
-          <span>{projectName}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-emerald-500/40 border border-emerald-500" />
-          <span>High match</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-amber-500/40 border border-amber-500" />
-          <span>Medium match</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 bg-gradient-to-r from-purple-500 to-cyan-400" />
-          <span>Aicoo route</span>
-        </div>
-      </div>
-    </div>
-  );
-}

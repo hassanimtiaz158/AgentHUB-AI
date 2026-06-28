@@ -73,7 +73,7 @@ const DEMO_FLOW = [
 
 export default function LandingPage() {
   return (
-    <div className="space-y-24">
+    <div className="space-y-16">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative text-center pt-14 pb-6">
         {/* Animated glow ring behind the headline */}
@@ -181,104 +181,79 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Six-step demo strip ─────────────────────────────────────────── */}
-      <section>
-        <div className="text-center mb-6">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-blue-400 mb-2">
-            60-second demo flow
+      {/* ── Capabilities block (flow + agents + features) ──────────────── */}
+      <section className="space-y-10">
+        {/* Flow + Agents combo header */}
+        <div className="text-center">
+          <div className="inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.18em]">
+            <span className="text-blue-400">60-second demo</span>
+            <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
+            <span className="text-purple-400">8 agents</span>
+            <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
+            <span className="text-emerald-400">End-to-end</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-semibold">
-            From brief to staffed team, six taps
+          <h2 className="text-2xl md:text-3xl font-semibold mt-2">
+            One brief → staffed team, fully coordinated
           </h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
+        {/* Six-step flow */}
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
           {DEMO_FLOW.map((s, i) => (
             <StaggerItem key={s.n} index={i}>
               <Link
                 href={s.to}
-                className="card card-interactive p-4 relative overflow-hidden h-full"
+                className="card card-interactive p-3 relative overflow-hidden h-full text-center group/step"
               >
                 <div
-                  className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${FEATURES[i % FEATURES.length].gradient} blur-2xl opacity-50 pointer-events-none`}
+                  className={`absolute -top-4 -right-4 w-14 h-14 rounded-full bg-gradient-to-br ${FEATURES[i % FEATURES.length].gradient} blur-xl opacity-40 group-hover/step:opacity-70 transition-opacity pointer-events-none`}
                 />
-                <div className="text-2xl font-semibold gradient-text mb-1 relative">
-                  {s.n}
-                </div>
-                <div className="text-sm font-medium relative">{s.label}</div>
-                <div className="text-[10px] text-[color:var(--text-muted)] mt-0.5 relative">
-                  Tap to jump
-                </div>
+                <div className="text-xl font-bold gradient-text relative">{s.n}</div>
+                <div className="text-xs font-medium relative mt-0.5">{s.label}</div>
               </Link>
             </StaggerItem>
           ))}
         </div>
-      </section>
 
-      {/* ── Demo agent strip ────────────────────────────────────────────── */}
-      <section>
-        <div className="text-center mb-6">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-purple-400 mb-2">
-            8 demo agents standing by
-          </div>
-          <h2 className="text-2xl md:text-3xl font-semibold">
-            The whole studio in one workspace
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Agent strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
           {DEMO_AGENTS.map((a, i) => (
             <StaggerItem key={a.name} index={i}>
-            <div
-              className="card card-interactive p-4 h-full"
-            >
-              <div className="flex items-center justify-between mb-3">
+              <div className="card card-interactive p-3 h-full text-center">
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold ${AGENT_COLORS[i % AGENT_COLORS.length]}`}
+                  className={`w-7 h-7 rounded-lg mx-auto flex items-center justify-center text-xs font-semibold ${AGENT_COLORS[i % AGENT_COLORS.length]}`}
                 >
                   {a.name.split(" ")[0][0]}
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
-                  available
-                </span>
+                <div className="text-xs font-medium mt-2 truncate">{a.name.replace(" Agent", "")}</div>
+                <div className="mt-1 flex flex-wrap justify-center gap-0.5">
+                  {a.skills.slice(0, 2).map((s) => (
+                    <span
+                      key={s}
+                      className="text-[9px] px-1.5 py-px rounded bg-white/5 border border-[var(--border-subtle)] text-[color:var(--text-muted)]"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="text-sm font-medium mb-2">{a.name}</div>
-              <div className="flex flex-wrap gap-1">
-                {a.skills.map((s) => (
-                  <span
-                    key={s}
-                    className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-[var(--border-subtle)] text-[color:var(--text-secondary)]"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
             </StaggerItem>
           ))}
         </div>
-      </section>
 
-      {/* ── Features ────────────────────────────────────────────────────── */}
-      <section>
-        <div className="text-center mb-10">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-purple-400 mb-2">
-            End-to-end
-          </div>
-          <h2 className="text-2xl md:text-3xl font-semibold">
-            Everything a team lead needs
-          </h2>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Features grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
           {FEATURES.map((f, i) => (
             <StaggerItem key={f.title} index={i}>
-            <div className="card card-interactive p-5 relative overflow-hidden group h-full">
-              <div
-                className={`absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br ${f.gradient} blur-2xl opacity-60 group-hover:opacity-90 transition-opacity pointer-events-none`}
-              />
-              <h3 className="font-semibold mb-2 relative">{f.title}</h3>
-              <p className="text-sm text-[color:var(--text-secondary)] relative">
-                {f.description}
-              </p>
-            </div>
+              <div className="card card-interactive p-4 relative overflow-hidden group h-full">
+                <div
+                  className={`absolute -top-8 -right-8 w-32 h-32 rounded-full bg-gradient-to-br ${f.gradient} blur-2xl opacity-50 group-hover:opacity-80 transition-opacity pointer-events-none`}
+                />
+                <h3 className="text-sm font-semibold mb-1 relative">{f.title}</h3>
+                <p className="text-xs text-[color:var(--text-secondary)] relative leading-relaxed">
+                  {f.description}
+                </p>
+              </div>
             </StaggerItem>
           ))}
         </div>

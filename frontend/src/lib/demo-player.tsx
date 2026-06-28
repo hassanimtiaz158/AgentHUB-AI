@@ -133,8 +133,24 @@ export function DemoProvider({
   );
 }
 
+const FALLBACK_DEMO_PLAYER: DemoPlayerValue = {
+  isDemo: false,
+  step: -1,
+  isPlaying: false,
+  advance: () => {},
+  goTo: () => {},
+  next: () => {},
+  prev: () => {},
+  pause: () => {},
+  resume: () => {},
+  toggle: () => {},
+  skipToEnd: () => {},
+};
+
 export function useDemoPlayer(): DemoPlayerValue {
   const ctx = useContext(DemoPlayerContext);
-  if (!ctx) throw new Error("useDemoPlayer must be used inside DemoProvider");
-  return ctx;
+  // In Next.js 16, components can briefly render outside the client provider
+  // during Link prefetching / partial route transitions. Return a no-op
+  // fallback instead of throwing so those renders don't crash.
+  return ctx ?? FALLBACK_DEMO_PLAYER;
 }
