@@ -32,6 +32,7 @@ export default function TaskBoardPage({
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +74,20 @@ export default function TaskBoardPage({
 
   function byLane(lane: Lane) {
     return tasks.filter((t) => t.status === lane);
+  }
+
+  const total = tasks.length;
+  const done = byLane("Done").length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const allDone = total > 0 && done === total;
+
+  function completeProject() {
+    if (!allDone) return;
+    setCompleted(true);
+  }
+
+  function deleteTask(taskId: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
   }
 
   function moveTask(task: Task, dir: 1 | -1) {
@@ -131,6 +146,44 @@ export default function TaskBoardPage({
         </button>
       </Card>
 
+      {completed && (
+        <div className="card border-emerald-500/30 px-4 py-3 text-sm text-emerald-300 inline-flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Project completed — all {total} tasks done.
+        </div>
+      )}
+
+      <Card>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-emerald-400">
+              Progress
+            </span>
+            <span className="text-sm font-semibold">
+              {done}/{total} tasks done
+            </span>
+          </div>
+          <span className="text-sm font-semibold text-[color:var(--text-primary)]">{pct}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {!completed && (
+          <button
+            onClick={completeProject}
+            disabled={!allDone}
+            className="btn-primary mt-3 w-full px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {allDone ? "Complete project" : "Complete project — finish all tasks first"}
+          </button>
+        )}
+      </Card>
+
       <div className="grid lg:grid-cols-3 gap-4">
         {LANES.map((lane) => (
           <div key={lane} className="card flex flex-col">
@@ -173,6 +226,7 @@ export default function TaskBoardPage({
                           <button
                             onClick={() => moveTask(t, -1)}
                             className="text-xs btn-ghost px-2 py-0.5 rounded"
+                            title="Move back"
                           >
                             ←
                           </button>
@@ -181,10 +235,18 @@ export default function TaskBoardPage({
                           <button
                             onClick={() => moveTask(t, 1)}
                             className="text-xs btn-ghost px-2 py-0.5 rounded"
+                            title="Move forward"
                           >
                             →
                           </button>
                         )}
+                        <button
+                          onClick={() => deleteTask(t.id)}
+                          className="text-xs btn-ghost px-2 py-0.5 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          title="Delete task"
+                        >
+                          ✕
+                        </button>
                       </div>
                     </div>
                   </div>

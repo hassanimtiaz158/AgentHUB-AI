@@ -31,7 +31,7 @@ export default function LandingPage() {
           <div className="mt-10 flex items-center justify-center gap-6 text-xs text-[color:var(--text-muted)]">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              8 demo agents standing by
+              12 demo agents standing by
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">60-second walkthrough</span>
@@ -95,7 +95,7 @@ export default function LandingPage() {
           <div className="inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.18em]">
             <span className="text-blue-400">60-second demo</span>
             <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
-            <span className="text-purple-400">8 agents</span>
+            <span className="text-purple-400">12 agents</span>
             <span className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
             <span className="text-emerald-400">End-to-end</span>
           </div>

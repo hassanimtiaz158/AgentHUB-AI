@@ -8,7 +8,11 @@ export type AgentRole =
   | "QA Agent"
   | "DevOps Agent"
   | "Marketing Agent"
-  | "Project Manager Agent";
+  | "Project Manager Agent"
+  | "Cloud Agent"
+  | "Mobile App Agent"
+  | "Data Engineer Agent"
+  | "Security Agent";
 
 export type Availability = "available" | "busy";
 
@@ -59,6 +63,16 @@ export interface Analysis {
     status: TaskStatus;
   }>;
   estimated_timeline?: string;
+  /** ISO timestamp of when the analysis was performed. */
+  analyzed_at?: string;
+  /** Estimated total cost for the project based on team composition and timeline. */
+  total_cost?: number;
+  /** IDs of the best-scoring agents selected by the system for this project. */
+  selected_agent_ids?: string[];
+  /** True when the computed total_cost exceeds the user's declared budget. */
+  budget_exceeded?: boolean;
+  /** Where the selected-agent pool came from. */
+  agent_source?: "backend" | "demo";
 }
 
 // ---------------------------------------------------------------------------

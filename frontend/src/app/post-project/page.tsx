@@ -7,7 +7,9 @@ import { Card, Spinner, StatusPill, Badge } from "@/components/ui";
 import { SkillInput } from "@/components/SkillInput";
 import { DemoProgress } from "@/components/DemoProgress";
 import { DEMO_BRIEF, DEMO_PROJECT_ID } from "@/lib/demo-flow";
-import { createProject } from "@/lib/api";
+import { createProject, listAgents } from "@/lib/api";
+import { demoAnalysis } from "@/lib/demo-data";
+import { buildAnalysisMetadata } from "@/lib/analysis-engine";
 import { useProjectStore } from "@/lib/store";
 import type { Project } from "@/lib/types";
 
@@ -84,7 +86,38 @@ export default function PostProjectPage({
     }
     const p: Project = res.data;
     store.setProject(p);
-    router.push(`/analysis${isDemo ? "?demo=1" : `?id=${p.id}`}`);
+
+    // Run the analysis engine: compute timestamp, total cost, and select the
+    // best agents for this project from the real registered pool (falling back
+    // to the demo pool with some busy agents when the backend is offline).
+    const agentRes = await listAgents();
+    const meta = await buildAnalysisMetadata({
+      requiredRoles: demoAnalysis.required_roles,
+      requiredSkills: p.required_skills,
+      difficulty: demoAnalysis.difficulty,
+      budget: p.budget,
+      teamSize: p.team_size,
+      listAgents: async () => agentRes.data ?? [],
+    });
+
+    // Persist the enriched analysis + selected matches so the analysis page
+    // and downstream pages (matches, workspace) can render them.
+    store.setAnalysis({
+      ...demoAnalysis,
+      project_id: p.id,
+      analyzed_at: meta.analyzed_at,
+      total_cost: meta.total_cost,
+      budget_exceeded: meta.budget_exceeded,
+      agent_source: meta.agent_source,
+      selected_agent_ids: meta.selected_agent_ids,
+    });
+    store.setMatches({
+      project_id: p.id,
+      project_title: p.title,
+      matches: meta.matches,
+    });
+
+    router.push(`/analysis${isDemo ? "?demo=1&new=1" : `?id=${p.id}&new=1`}`);
   }
 
   return (

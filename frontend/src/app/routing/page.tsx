@@ -67,7 +67,7 @@ export default function RoutingPage({
     (async () => {
       const [agentRes, matchRes] = await Promise.all([
         listAgents(),
-        matchAgents(projectId, 8),
+        matchAgents(projectId, 12),
       ]);
       if (!active) return;
       setAgents(agentRes.data ?? demoAgents);
@@ -246,6 +246,18 @@ export default function RoutingPage({
         </div>
         <Topology3D />
       </Card>
+
+      <div className="flex justify-end">
+        <Link
+          href={`/workspace?demo=1&id=${projectId}`}
+          className="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2"
+        >
+          Go to Team
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      </div>
     </div>
   );
 }

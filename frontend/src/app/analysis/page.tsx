@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, LoadingState, ErrorState, Badge, StatTile } from "@/components/ui";
 import { DemoProgress } from "@/components/DemoProgress";
 import { analyzeProject, createProject } from "@/lib/api";
-import { demoAnalysis } from "@/lib/demo-data";
+import { demoAnalysis, agentRoleLine } from "@/lib/demo-data";
 import { useProjectStore } from "@/lib/store";
 import { useDemoPlayer } from "@/lib/demo-player";
 import type { Analysis, Project } from "@/lib/types";
@@ -149,7 +149,16 @@ export default function AnalysisPage({
         <p className="text-[color:var(--text-secondary)]">{analysis.summary}</p>
       </Card>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      {analysis.budget_exceeded && (
+        <div className="card border-red-500/30 px-4 py-3 text-sm text-red-300 inline-flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Estimated cost exceeds declared budget{project?.budget ? ` of $${parseInt(project.budget, 10).toLocaleString()}` : ""}. Consider trimming scope or raising the budget.
+        </div>
+      )}
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile
           label="Difficulty"
           value={
@@ -169,7 +178,73 @@ export default function AnalysisPage({
           value={analysis.recommended_skills.length}
           accent="blue"
         />
+        <StatTile
+          label="Estimated total cost"
+          value={
+            analysis.total_cost
+              ? `$${analysis.total_cost.toLocaleString()}`
+              : "—"
+          }
+          accent={analysis.budget_exceeded ? "red" : "green"}
+          hint={
+            analysis.budget_exceeded
+              ? "Exceeds declared budget"
+              : analysis.analyzed_at
+                ? `Analyzed ${new Date(analysis.analyzed_at).toLocaleString()}`
+                : undefined
+          }
+        />
       </div>
+
+      {/* Best agents selected by the system */}
+      {analysis.selected_agent_ids && analysis.selected_agent_ids.length > 0 && (
+        <Card className="border-emerald-500/30">
+          <SectionTitle
+            title="Best agents selected"
+            eyebrow={
+              analysis.agent_source === "backend"
+                ? "Auto-selected from live agents"
+                : "Auto-selected from demo pool (offline)"
+            }
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {store.matches?.matches
+              .filter((m) => analysis.selected_agent_ids!.includes(m.agent_id))
+              .map((m) => {
+                const isBusy = m.availability === "busy";
+                return (
+                  <div
+                    key={m.agent_id}
+                    className={`rounded-lg border p-3 text-center ${
+                      isBusy
+                        ? "border-amber-500/30 bg-amber-500/5"
+                        : "border-emerald-500/20 bg-emerald-500/5"
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg mx-auto flex items-center justify-center text-sm font-semibold ${
+                      isBusy ? "bg-amber-500/20 text-amber-300" : "bg-emerald-500/20 text-emerald-300"
+                    }`}>
+                      {m.agent_name.split(" ")[0][0]}
+                    </div>
+                    <div className="text-xs font-medium mt-2 truncate">{m.agent_name.replace(" Agent", "")}</div>
+                    <div className="mt-1 flex items-center justify-center gap-1.5">
+                      <span className={`text-[10px] font-semibold ${isBusy ? "text-amber-400" : "text-emerald-400"}`}>
+                        Score {m.match_score}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        isBusy
+                          ? "bg-amber-500/15 text-amber-300"
+                          : "bg-emerald-500/15 text-emerald-300"
+                      }`}>
+                        {m.availability}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </Card>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card>
@@ -212,8 +287,8 @@ export default function AnalysisPage({
               className="flex items-center justify-between p-3 rounded-lg border border-[var(--border-subtle)]"
             >
               <div>
-                <div className="text-sm font-medium">{t.title}</div>
-                <div className="text-xs text-[color:var(--text-muted)]">{t.role}</div>
+                <div className="text-sm font-medium">{t.role} works on: {agentRoleLine(t.role)} of {project?.title ?? "AI-powered analytics platform"}</div>
+                <div className="text-xs text-[color:var(--text-muted)]">{t.title}</div>
               </div>
               <Badge tone="neutral">{t.status}</Badge>
             </div>

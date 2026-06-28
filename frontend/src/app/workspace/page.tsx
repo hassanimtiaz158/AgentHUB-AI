@@ -34,7 +34,7 @@ export default function WorkspacePage({
     (async () => {
       const [agentRes, matchRes] = await Promise.all([
         listAgents({ available: true }),
-        matchAgents(projectId, 8),
+        matchAgents(projectId, 12),
       ]);
       if (!active) return;
       setAgents(agentRes.data ?? demoAgents);

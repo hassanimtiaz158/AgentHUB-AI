@@ -6,6 +6,7 @@
 // always has something to render.
 
 import { demoAnalysis, demoStandup, buildDemoMatches, demoTasks } from "./demo-data";
+import { DEMO_BRIEF, DEMO_PROJECT_ID } from "./demo-flow";
 import type {
   Agent,
   Analysis,
@@ -132,10 +133,26 @@ export async function createProject(payload: {
   deadline?: string;
   team_size?: number;
 }): Promise<ApiEnvelope<Project>> {
-  return safeFetch<Project>("/api/projects", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return safeFetch<Project>(
+    "/api/projects",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    () => ({
+      id: payload.id ?? DEMO_PROJECT_ID,
+      title: payload.title || DEMO_BRIEF.title,
+      description: payload.description || DEMO_BRIEF.description,
+      required_skills: payload.required_skills.length
+        ? payload.required_skills
+        : DEMO_BRIEF.required_skills,
+      budget: payload.budget ?? DEMO_BRIEF.budget,
+      deadline: payload.deadline ?? DEMO_BRIEF.deadline,
+      team_size: payload.team_size ?? DEMO_BRIEF.team_size,
+      status: "Active",
+      created_at: new Date().toISOString(),
+    }),
+  );
 }
 
 export async function listProjects(): Promise<ApiEnvelope<Project[]>> {

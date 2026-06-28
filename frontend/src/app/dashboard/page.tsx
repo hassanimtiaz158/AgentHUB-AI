@@ -96,7 +96,7 @@ export default function DashboardPage() {
             <EmptyState title="No agents loaded" subtitle="Run the demo to populate the roster." />
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
-              {agents.slice(0, 6).map((agent) => {
+              {agents.slice(0, 8).map((agent) => {
                 const match = matches.find((m) => m.agent_id === agent.id);
                 return (
                   <div key={agent.id} className="rounded-lg border border-[var(--border-subtle)] bg-white/[0.02] p-3">
@@ -176,7 +176,7 @@ export default function DashboardPage() {
               <EmptyState title="No tasks yet" subtitle="Route tasks from the Aicoo page." />
             ) : (
               <div className="space-y-2">
-                {tasks.slice(0, 4).map((task) => (
+                {tasks.slice(0, 6).map((task) => (
                   <div key={task.id} className="flex items-center justify-between text-sm">
                     <span className="truncate pr-2">{task.title}</span>
                     <Badge
@@ -192,9 +192,9 @@ export default function DashboardPage() {
                     </Badge>
                   </div>
                 ))}
-                {tasks.length > 4 && (
+                {tasks.length > 6 && (
                   <div className="text-[10px] text-[color:var(--text-muted)]">
-                    +{tasks.length - 4} more
+                    +{tasks.length - 6} more
                   </div>
                 )}
               </div>

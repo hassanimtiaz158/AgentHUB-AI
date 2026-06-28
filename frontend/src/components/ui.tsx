@@ -393,7 +393,7 @@ export function StatTile({
     neutral: "from-white/10 to-white/0",
   }[accent];
   return (
-    <div className="card relative overflow-hidden">
+    <div className="card relative overflow-hidden rounded-none text-center">
       <div
         className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-b ${accentColor} pointer-events-none`}
       />
