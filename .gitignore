@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/.venv/
+.venv/
+
+# Build outputs
+frontend/.next/
+frontend/out/
+backend/__pycache__/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment / secrets
+.env
+.env.local
+backend/.env
+frontend/.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+DEVPOST.md

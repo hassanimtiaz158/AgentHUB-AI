@@ -1,0 +1,19 @@
+fastapi==0.138.1
+uvicorn==0.49.0
+python-dotenv==1.2.2
+pydantic==2.13.4
+pydantic-settings>=2.0
+httpx==0.28.1
+openai==2.44.0
+groq==1.5.0
+pytest==9.1.1
+
+# --- Future / optional dependencies (not imported by current app code) ---
+# The storage layer (app/database.py) is an in-memory seam designed to be
+# swapped for Supabase. These packages are pre-installed so the swap is a
+# one-line change in database.py without a fresh `pip install`.
+supabase==2.31.0
+requests==2.34.2
+langchain==1.3.11
+langgraph==1.2.6
+pytest-asyncio==1.4.0
