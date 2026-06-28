@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root.dark {
   --bg-base: #08080b;
   --bg-elevated: #101014;
   --bg-card: #16161c;
@@ -41,6 +42,34 @@
   --ring-shadow: rgba(139, 92, 246, 0.15);
 }
 
+:root.light {
+  --bg-base: #f8f9fb;
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --border-subtle: #e4e5e9;
+  --border-focus: #d0d2d8;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --accent-purple: #7c3aed;
+  --accent-blue: #2563eb;
+  --accent-cyan: #0891b2;
+  --accent-green: #059669;
+  --accent-yellow: #d97706;
+  --accent-red: #dc2626;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 24px 56px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 24px rgba(124, 58, 237, 0.15);
+
+  /* Focus ring */
+  --ring-color: rgba(124, 58, 237, 0.5);
+  --ring-shadow: rgba(124, 58, 237, 0.1);
+}
+
 html,
 body {
   height: 100%;
@@ -62,12 +91,22 @@ body::before {
   z-index: 0;
 }
 
+:root.light body::before {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% -10%, rgba(124, 58, 237, 0.07), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(37, 99, 235, 0.05), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 50% 110%, rgba(8, 145, 178, 0.03), transparent 60%);
+}
+
 @layer components {
   .glass {
     background: rgba(22, 22, 28, 0.7);
     backdrop-filter: saturate(160%) blur(14px);
     -webkit-backdrop-filter: saturate(160%) blur(14px);
     border: 1px solid var(--border-subtle);
+  }
+  :root.light .glass {
+    background: rgba(255, 255, 255, 0.75);
   }
 
   .card {
@@ -125,6 +164,12 @@ body::before {
   }
   .btn-ghost:hover {
     background: rgba(255, 255, 255, 0.07);
+  }
+  :root.light .btn-ghost {
+    background: rgba(0, 0, 0, 0.03);
+  }
+  :root.light .btn-ghost:hover {
+    background: rgba(0, 0, 0, 0.06);
   }
 
   .input {
@@ -302,6 +347,12 @@ body::before {
   ::-webkit-scrollbar-thumb:hover {
     background: #3d3d4d;
   }
+  :root.light ::-webkit-scrollbar-thumb {
+    background: #d0d2d8;
+  }
+  :root.light ::-webkit-scrollbar-thumb:hover {
+    background: #b0b2b8;
+  }
 }
 
 /* Reduced motion — zeroes all motion utilities globally. */
@@ -335,6 +386,11 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(6px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+:root.light .topology-label {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   user-select: none;
   transform: translateY(-4px);

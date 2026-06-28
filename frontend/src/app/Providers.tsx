@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout";
 import { ProjectStoreProvider } from "@/lib/store";
 import { DemoProvider } from "@/lib/demo-player";
 import { ToastProvider } from "@/components/Toast";
+import { ThemeProvider } from "@/app/ThemeProvider";
 
 function DemoAndToast({ children }: { children: React.ReactNode }) {
   const params = useSearchParams();
@@ -27,10 +28,12 @@ function DemoAndToastSuspended({ children }: { children: React.ReactNode }) {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ProjectStoreProvider>
-      <DemoAndToastSuspended>
-        <AppShell>{children}</AppShell>
-      </DemoAndToastSuspended>
-    </ProjectStoreProvider>
+    <ThemeProvider>
+      <ProjectStoreProvider>
+        <DemoAndToastSuspended>
+          <AppShell>{children}</AppShell>
+        </DemoAndToastSuspended>
+      </ProjectStoreProvider>
+    </ThemeProvider>
   );
 }

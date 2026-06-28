@@ -1,79 +1,8 @@
 import Link from "next/link";
-import { Card, StaggerItem } from "@/components/ui";
-
-const FEATURES = [
-  {
-    title: "AI project analysis",
-    description:
-      "Describe your project and the analyzer infers required roles, difficulty, recommended skills, and a task breakdown.",
-    gradient: "from-purple-500/30 to-purple-500/0",
-  },
-  {
-    title: "Smart agent matching",
-    description:
-      "Match by role, skills, and availability. Each result is scored 0–100 with a clear, human-readable reason.",
-    gradient: "from-blue-500/30 to-blue-500/0",
-  },
-  {
-    title: "Aicoo routing",
-    description:
-      "Coordinate multi-agent work through the Aicoo layer: route tasks, share context, and track every handoff live.",
-    gradient: "from-cyan-500/30 to-cyan-500/0",
-  },
-  {
-    title: "Task board",
-    description:
-      "Kanban-style tracking across Todo, In Progress, and Done — auto-routed to the right agent.",
-    gradient: "from-emerald-500/30 to-emerald-500/0",
-  },
-  {
-    title: "Team workspace",
-    description:
-      "See the full assembled team, their skills, and availability in one glance before kickoff.",
-    gradient: "from-amber-500/30 to-amber-500/0",
-  },
-  {
-    title: "AI standups",
-    description:
-      "Generate daily summaries, surface blockers, and surface next steps — straight from task state.",
-    gradient: "from-pink-500/30 to-pink-500/0",
-  },
-];
-
-const DEMO_AGENTS = [
-  { name: "Frontend Agent", skills: ["React", "TypeScript", "Tailwind CSS"] },
-  { name: "Backend Agent", skills: ["Python", "FastAPI", "PostgreSQL"] },
-  { name: "AI/ML Agent", skills: ["PyTorch", "LLM", "NLP"] },
-  { name: "UI/UX Agent", skills: ["Figma", "User Research"] },
-  { name: "QA Agent", skills: ["Cypress", "Playwright"] },
-  { name: "DevOps Agent", skills: ["Docker", "Kubernetes", "AWS"] },
-  { name: "Marketing Agent", skills: ["SEO", "Content", "Ads"] },
-  { name: "Project Manager", skills: ["Scrum", "Roadmapping"] },
-];
-
-const AGENT_COLORS = [
-  "bg-purple-500/20 text-purple-300",
-  "bg-blue-500/20 text-blue-300",
-  "bg-cyan-500/20 text-cyan-300",
-  "bg-pink-500/20 text-pink-300",
-  "bg-emerald-500/20 text-emerald-300",
-  "bg-amber-500/20 text-amber-300",
-  "bg-red-500/20 text-red-300",
-  "bg-violet-500/20 text-violet-300",
-];
-
-const DEMO_FLOW = [
-  { n: "01", label: "Post project", to: "/post-project?demo=1" },
-  { n: "02", label: "AI analysis", to: "/analysis?demo=1" },
-  { n: "03", label: "Find agents", to: "/matches?demo=1" },
-  { n: "04", label: "Aicoo routing", to: "/routing?demo=1" },
-  { n: "05", label: "Team workspace", to: "/workspace?demo=1" },
-  { n: "06", label: "AI standup", to: "/standup?demo=1" },
-];
 
 export default function LandingPage() {
   return (
-    <div className="space-y-16">
+    <div className="space-y-2">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative text-center pt-14 pb-6">
         {/* Animated glow ring behind the headline */}
@@ -97,28 +26,6 @@ export default function LandingPage() {
             <span className="text-cyan-300 font-medium">Aicoo coordination layer</span>,
             and keeps the whole team aligned with AI-generated standups.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-10">
-            <Link
-              href="/post-project?demo=1"
-              className="btn-primary px-7 py-3.5 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-2"
-            >
-              Run full demo
-              <ArrowIcon />
-            </Link>
-            <Link
-              href="/post-project"
-              className="btn-ghost px-7 py-3.5 rounded-lg text-sm font-medium inline-flex items-center justify-center"
-            >
-              Post a project
-            </Link>
-            <Link
-              href="/routing?demo=1"
-              className="btn-ghost px-7 py-3.5 rounded-lg text-sm font-medium inline-flex items-center justify-center"
-            >
-              See Aicoo routing
-            </Link>
-          </div>
 
           {/* Social proof strip */}
           <div className="mt-10 flex items-center justify-center gap-6 text-xs text-[color:var(--text-muted)]">
@@ -182,7 +89,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Capabilities block (flow + agents + features) ──────────────── */}
-      <section className="space-y-6">
+      <section>
         {/* Flow + Agents combo header */}
         <div className="text-center">
           <div className="inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.18em]">
@@ -196,71 +103,10 @@ export default function LandingPage() {
             One brief → staffed team, fully coordinated
           </h2>
         </div>
-
-        {/* Six-step flow */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-          {DEMO_FLOW.map((s, i) => (
-            <StaggerItem key={s.n} index={i}>
-              <Link
-                href={s.to}
-                className="card card-interactive p-3 relative overflow-hidden h-full text-center group/step"
-              >
-                <div
-                  className={`absolute -top-4 -right-4 w-14 h-14 rounded-full bg-gradient-to-br ${FEATURES[i % FEATURES.length].gradient} blur-xl opacity-40 group-hover/step:opacity-70 transition-opacity pointer-events-none`}
-                />
-                <div className="text-xl font-bold gradient-text relative">{s.n}</div>
-                <div className="text-xs font-medium relative mt-0.5">{s.label}</div>
-              </Link>
-            </StaggerItem>
-          ))}
-        </div>
-
-        {/* Agent strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          {DEMO_AGENTS.map((a, i) => (
-            <StaggerItem key={a.name} index={i}>
-              <div className="card card-interactive p-3 h-full text-center">
-                <div
-                  className={`w-7 h-7 rounded-lg mx-auto flex items-center justify-center text-xs font-semibold ${AGENT_COLORS[i % AGENT_COLORS.length]}`}
-                >
-                  {a.name.split(" ")[0][0]}
-                </div>
-                <div className="text-xs font-medium mt-2 truncate">{a.name.replace(" Agent", "")}</div>
-                <div className="mt-1 flex flex-wrap justify-center gap-0.5">
-                  {a.skills.slice(0, 2).map((s) => (
-                    <span
-                      key={s}
-                      className="text-[9px] px-1.5 py-px rounded bg-white/5 border border-[var(--border-subtle)] text-[color:var(--text-muted)]"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
-
-        {/* Features grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          {FEATURES.map((f, i) => (
-            <StaggerItem key={f.title} index={i}>
-              <div className="card card-interactive p-4 relative overflow-hidden group h-full">
-                <div
-                  className={`absolute -top-8 -right-8 w-32 h-32 rounded-full bg-gradient-to-br ${f.gradient} blur-2xl opacity-50 group-hover:opacity-80 transition-opacity pointer-events-none`}
-                />
-                <h3 className="text-sm font-semibold mb-1 relative">{f.title}</h3>
-                <p className="text-xs text-[color:var(--text-secondary)] relative leading-relaxed">
-                  {f.description}
-                </p>
-              </div>
-            </StaggerItem>
-          ))}
-        </div>
       </section>
 
       {/* ── Screenshot-friendly demo showcase ───────────────────────────── */}
-      <section className="card p-6 md:p-10 relative overflow-hidden">
+      <section className="card p-6 md:p-10 relative overflow-hidden mt-6">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-cyan-500/5 pointer-events-none" />
         <div className="relative">
           <div className="text-center mb-8">
@@ -329,15 +175,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="text-center mt-8">
-            <Link
-              href="/post-project?demo=1"
-              className="btn-primary px-6 py-3 rounded-lg text-sm font-medium inline-flex items-center gap-2"
-            >
-              Run full demo
-              <ArrowIcon />
-            </Link>
-          </div>
         </div>
       </section>
 

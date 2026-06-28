@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { healthCheck } from "@/lib/api";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV = [
   { href: "/", label: "Home", icon: "grid" },
@@ -213,6 +214,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
         </div>
+
+        {/* Theme toggle */}
+        <div className={`border-t border-[var(--border-subtle)] py-4 flex ${sidebarOpen ? "px-5 justify-between items-center" : "justify-center"}`}>
+          {sidebarOpen && (
+            <span className="text-xs text-[color:var(--text-muted)]">Appearance</span>
+          )}
+          <ThemeToggle />
+        </div>
       </aside>
 
       {/* ── Mobile header ──────────────────────────────────────────── */}
@@ -224,13 +233,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="font-semibold">AgentHub AI</span>
           </Link>
-          <button
-            onClick={() => setSidebarOpen((o) => !o)}
-            className="btn-ghost px-3 py-1.5 rounded-md text-sm"
-            aria-label="Toggle menu"
-          >
-            <HamburgerIcon open={sidebarOpen} />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              className="btn-ghost px-3 py-1.5 rounded-md text-sm"
+              aria-label="Toggle menu"
+            >
+              <HamburgerIcon open={sidebarOpen} />
+            </button>
+          </div>
         </div>
         {sidebarOpen && (
           <div className="border-t border-[var(--border-subtle)] px-3 py-2">
