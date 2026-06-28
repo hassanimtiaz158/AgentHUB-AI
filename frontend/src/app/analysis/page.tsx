@@ -271,7 +271,7 @@ export default function AnalysisPage({
           <div className="flex flex-wrap gap-2">
             {analysis.recommended_skills.map((s) => (
               <Badge key={s} tone="blue">
-                {s}
+                {s.toUpperCase()}
               </Badge>
             ))}
           </div>
@@ -359,7 +359,9 @@ function DemoAnalysisCard() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {demoAnalysis.recommended_skills.map((s) => (
-              <Badge key={s} tone="blue">{s}</Badge>
+              <Badge key={s} tone="blue">
+                {s.toUpperCase()}
+              </Badge>
             ))}
           </div>
         </div>

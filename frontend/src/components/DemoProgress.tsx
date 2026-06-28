@@ -8,7 +8,7 @@ export function DemoProgress({ demoParam }: { demoParam: string | null }) {
   const player = useDemoPlayer();
   if (!demoParam) return null;
 
-  const { step, isPlaying } = player;
+  const { step } = player;
   const currentIdx = step >= 0 ? step : 0;
   const progress = ((currentIdx + 1) / DEMO_FLOW.length) * 100;
 
@@ -25,45 +25,6 @@ export function DemoProgress({ demoParam }: { demoParam: string | null }) {
               Step {currentIdx + 1}
               <span className="text-[color:var(--text-muted)]"> / {DEMO_FLOW.length}</span>
             </span>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={player.prev}
-              disabled={currentIdx === 0}
-              className="focus-ring w-7 h-7 rounded-md flex items-center justify-center text-[color:var(--text-secondary)] hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              aria-label="Previous step"
-            >
-              ◀
-            </button>
-            <button
-              type="button"
-              onClick={player.toggle}
-              disabled={currentIdx >= DEMO_FLOW.length - 1}
-              className="focus-ring w-8 h-8 rounded-md flex items-center justify-center text-[color:var(--text-primary)] hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              aria-label={isPlaying ? "Pause demo" : "Play demo"}
-            >
-              {isPlaying ? "⏸" : "▶"}
-            </button>
-            <button
-              type="button"
-              onClick={player.next}
-              disabled={currentIdx >= DEMO_FLOW.length - 1}
-              className="focus-ring w-7 h-7 rounded-md flex items-center justify-center text-[color:var(--text-secondary)] hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              aria-label="Next step"
-            >
-              ▶|
-            </button>
-            <button
-              type="button"
-              onClick={player.skipToEnd}
-              className="focus-ring px-2 h-7 rounded-md flex items-center justify-center text-[10px] uppercase tracking-wider text-[color:var(--text-muted)] hover:bg-white/5 transition-colors"
-              aria-label="Skip to end"
-            >
-              Skip →
-            </button>
           </div>
 
           {/* Step pills */}
