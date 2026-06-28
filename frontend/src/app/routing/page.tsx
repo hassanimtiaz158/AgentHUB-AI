@@ -2,13 +2,16 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRef } from "react";
 import { Card, Badge, LoadingState, Spinner } from "@/components/ui";
 import { DemoProgress } from "@/components/DemoProgress";
 import { aicooRoute, listAgents, matchAgents } from "@/lib/api";
 import { demoAgents, buildDemoMatches } from "@/lib/demo-data";
 import { DEMO_ROUTE_EVENTS } from "@/lib/demo-flow";
 import { useProjectStore } from "@/lib/store";
+import { useDemoPlayer } from "@/lib/demo-player";
+import { useToast } from "@/components/Toast";
 import type { Agent, MatchResult } from "@/lib/types";
 
 interface RouteEvent {
@@ -22,16 +25,28 @@ interface RouteEvent {
   tone?: string;
 }
 
+const TONE_HEX: Record<string, string> = {
+  purple: "#8b5cf6",
+  blue: "#3b82f6",
+  cyan: "#06b6d4",
+  green: "#10b981",
+  yellow: "#f59e0b",
+  red: "#ef4444",
+};
+
 export default function RoutingPage({
   searchParams,
 }: {
   searchParams: Promise<{ id?: string; demo?: string }>;
 }) {
-  const router = useRouter();
   const store = useProjectStore();
   const { id, demo } = use(searchParams);
   const isDemo = !!demo;
   const projectId = id ?? store.project?.id ?? "demo";
+  const player = useDemoPlayer();
+  const toast = useToast();
+  const isPlayingRef = useRef(player.isPlaying);
+  isPlayingRef.current = player.isPlaying;
 
   const [agents, setAgents] = useState<Agent[]>([]);
   const [matches, setMatches] = useState<MatchResult[]>([]);
@@ -57,11 +72,23 @@ export default function RoutingPage({
         setMatches(buildDemoMatches().matches);
       }
       setLoading(false);
-      // Demo mode: auto-play the routing timeline.
+      // Demo mode: auto-play the routing timeline, pausable via the player.
       if (demo) {
+        const waitResume = () =>
+          new Promise<void>((resolve) => {
+            // Poll until playing again (or component unmounts).
+            const tick = () => {
+              if (!active) return resolve();
+              if (isPlayingRef.current) return resolve();
+              setTimeout(tick, 100);
+            };
+            tick();
+          });
         const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
         await delay(600);
         for (const ev of DEMO_ROUTE_EVENTS) {
+          if (!active) return;
+          if (!isPlayingRef.current) await waitResume();
           if (!active) return;
           const agentName = ev.agent
             ? matchRes.data?.matches?.find((m) => m.agent_name === ev.agent)?.agent_name ?? ev.agent
@@ -81,11 +108,7 @@ export default function RoutingPage({
           ]);
           await delay(900);
         }
-        // After timeline completes, auto-advance to workspace (demo only).
-        if (active) {
-          await delay(800);
-          router.push(`/workspace?demo=1&id=${projectId}`);
-        }
+        // After timeline completes, the DemoProvider auto-advances to workspace.
       }
     })();
     return () => {
@@ -110,6 +133,9 @@ export default function RoutingPage({
         },
         ...prev,
       ]);
+      toast.success(`Routed to ${name}`);
+    } else if (res.error) {
+      toast.error(res.error);
     }
   }
 
@@ -179,11 +205,15 @@ export default function RoutingPage({
                   : e.key === "workspace"
                   ? "Workspace"
                   : "Routed";
+                const hex = TONE_HEX[tone] ?? TONE_HEX.purple;
                 return (
                   <div
                     key={i}
-                    className={`px-3 py-2 rounded-lg border border-${tone}-500/20 bg-${tone}-500/5`}
-                    style={{ borderColor: `rgba(var(--${tone}-500-rgb, 139 92 246), 0.2)` }}
+                    className="px-3 py-2 rounded-lg border"
+                    style={{
+                      borderColor: `${hex}33`,
+                      backgroundColor: `${hex}0D`,
+                    }}
                   >
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="font-medium">{agentLabel}</span>

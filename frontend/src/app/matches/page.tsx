@@ -15,6 +15,7 @@ import {
 import { DemoProgress } from "@/components/DemoProgress";
 import { matchAgents } from "@/lib/api";
 import { useProjectStore } from "@/lib/store";
+import { useDemoPlayer } from "@/lib/demo-player";
 import type { MatchResult, MatchResponse } from "@/lib/types";
 
 export default function MatchesPage({
@@ -26,6 +27,7 @@ export default function MatchesPage({
   const store = useProjectStore();
   const { id, max, demo } = use(searchParams);
   const isDemo = !!demo;
+  const player = useDemoPlayer();
 
   const [data, setData] = useState<MatchResponse | null>(store.matches);
   const [loading, setLoading] = useState(false);
@@ -45,12 +47,7 @@ export default function MatchesPage({
       if (res.data) {
         setData(res.data);
         store.setMatches(res.data);
-        // In demo mode, auto-advance to routing after a short beat.
-        if (demo) {
-          setTimeout(() => {
-            router.push(`/routing?demo=1&id=${projectId}`);
-          }, 2000);
-        }
+        // In demo mode, the DemoProvider auto-advances to routing.
       } else if (res.error) {
         setError(res.error);
       }

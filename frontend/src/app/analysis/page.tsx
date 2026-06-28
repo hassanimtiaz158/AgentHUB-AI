@@ -8,6 +8,7 @@ import { DemoProgress } from "@/components/DemoProgress";
 import { analyzeProject, createProject } from "@/lib/api";
 import { demoAnalysis } from "@/lib/demo-data";
 import { useProjectStore } from "@/lib/store";
+import { useDemoPlayer } from "@/lib/demo-player";
 import type { Analysis, Project } from "@/lib/types";
 
 export default function AnalysisPage({
@@ -19,6 +20,7 @@ export default function AnalysisPage({
   const store = useProjectStore();
   const { id, new: isNew, demo } = use(searchParams);
   const isDemo = !!demo;
+  const player = useDemoPlayer();
 
   const [analysis, setAnalysis] = useState<Analysis | null>(store.analysis);
   const [project, setProjectData] = useState<Project | null>(store.project);
@@ -59,12 +61,8 @@ export default function AnalysisPage({
         setAnalysis(res.data);
         setProjectData(currentProject);
         store.setAnalysis(res.data);
-        // In demo mode, auto-advance to matches after a short beat.
-        if (demo) {
-          setTimeout(() => {
-            router.push(`/matches?demo=1&id=${currentProject!.id}`);
-          }, 1500);
-        }
+        // In demo mode, the DemoProvider auto-advances to matches.
+        // Nothing to do here — the player owns the timer.
       } else if (res.error) {
         setError(res.error);
       }

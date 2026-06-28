@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/components/layout";
-import { ProjectStoreProvider } from "@/lib/store";
+import { metadata } from "./metadata";
+import Providers from "./Providers";
+
+export { metadata };
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,12 +15,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AgentHub AI — Multi-Agent Project Coordination",
-  description:
-    "Coordinate multi-agent AI teams: analyze projects, match agents, route tasks, and track work.",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
       <body className="min-h-full flex flex-col">
-        <ProjectStoreProvider>
-          <AppShell>{children}</AppShell>
-        </ProjectStoreProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

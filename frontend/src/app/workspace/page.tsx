@@ -8,6 +8,7 @@ import { DemoProgress } from "@/components/DemoProgress";
 import { listAgents, matchAgents } from "@/lib/api";
 import { demoAgents } from "@/lib/demo-data";
 import { useProjectStore } from "@/lib/store";
+import { useDemoPlayer } from "@/lib/demo-player";
 import type { Agent, MatchResult } from "@/lib/types";
 
 export default function WorkspacePage({
@@ -20,6 +21,7 @@ export default function WorkspacePage({
   const { id, demo } = use(searchParams);
   const isDemo = !!demo;
   const projectId = id ?? store.project?.id ?? "demo";
+  const player = useDemoPlayer();
 
   const [agents, setAgents] = useState<Agent[]>([]);
   const [matches, setMatches] = useState<MatchResult[]>([]);
@@ -42,12 +44,7 @@ export default function WorkspacePage({
         setDemoFallback(true);
       }
       setLoading(false);
-      // In demo mode, auto-advance to standup after a beat.
-      if (demo) {
-        setTimeout(() => {
-          router.push(`/standup?demo=1&id=${projectId}`);
-        }, 3000);
-      }
+      // In demo mode, the DemoProvider auto-advances to standup.
     })();
     return () => {
       active = false;

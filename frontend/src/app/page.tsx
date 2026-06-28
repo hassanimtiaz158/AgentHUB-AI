@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card, StaggerItem } from "@/components/ui";
 
 const FEATURES = [
   {
@@ -192,22 +193,23 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {DEMO_FLOW.map((s, i) => (
-            <Link
-              key={s.n}
-              href={s.to}
-              className="card p-4 hover:translate-y-[-2px] transition-transform relative overflow-hidden"
-            >
-              <div
-                className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${FEATURES[i % FEATURES.length].gradient} blur-2xl opacity-50 pointer-events-none`}
-              />
-              <div className="text-2xl font-semibold gradient-text mb-1 relative">
-                {s.n}
-              </div>
-              <div className="text-sm font-medium relative">{s.label}</div>
-              <div className="text-[10px] text-[color:var(--text-muted)] mt-0.5 relative">
-                Tap to jump
-              </div>
-            </Link>
+            <StaggerItem key={s.n} index={i}>
+              <Link
+                href={s.to}
+                className="card card-interactive p-4 relative overflow-hidden h-full"
+              >
+                <div
+                  className={`absolute -top-6 -right-6 w-20 h-20 rounded-full bg-gradient-to-br ${FEATURES[i % FEATURES.length].gradient} blur-2xl opacity-50 pointer-events-none`}
+                />
+                <div className="text-2xl font-semibold gradient-text mb-1 relative">
+                  {s.n}
+                </div>
+                <div className="text-sm font-medium relative">{s.label}</div>
+                <div className="text-[10px] text-[color:var(--text-muted)] mt-0.5 relative">
+                  Tap to jump
+                </div>
+              </Link>
+            </StaggerItem>
           ))}
         </div>
       </section>
@@ -224,9 +226,9 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {DEMO_AGENTS.map((a, i) => (
+            <StaggerItem key={a.name} index={i}>
             <div
-              key={a.name}
-              className="card p-4 hover:translate-y-[-2px] transition-transform"
+              className="card card-interactive p-4 h-full"
             >
               <div className="flex items-center justify-between mb-3">
                 <div
@@ -250,6 +252,7 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
+            </StaggerItem>
           ))}
         </div>
       </section>
@@ -265,8 +268,9 @@ export default function LandingPage() {
           </h2>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="card p-5 relative overflow-hidden group">
+          {FEATURES.map((f, i) => (
+            <StaggerItem key={f.title} index={i}>
+            <div className="card card-interactive p-5 relative overflow-hidden group h-full">
               <div
                 className={`absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br ${f.gradient} blur-2xl opacity-60 group-hover:opacity-90 transition-opacity pointer-events-none`}
               />
@@ -275,6 +279,7 @@ export default function LandingPage() {
                 {f.description}
               </p>
             </div>
+            </StaggerItem>
           ))}
         </div>
       </section>
