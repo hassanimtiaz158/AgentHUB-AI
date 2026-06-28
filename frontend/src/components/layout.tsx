@@ -85,9 +85,39 @@ function Icon({ name }: { name: string }) {
   }
 }
 
+/* ── Hamburger / close icon ──────────────────────────────────────────── */
+function HamburgerIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+    >
+      {open ? (
+        /* X icon */
+        <>
+          <path d="M6 6l12 12M6 18L18 6" />
+        </>
+      ) : (
+        /* Three lines */
+        <>
+          <path d="M4 6h16" />
+          <path d="M4 12h16" />
+          <path d="M4 18h16" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [backendStatus, setBackendStatus] = useState<"online" | "demo" | "loading">("loading");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -100,49 +130,71 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Close sidebar on route change (mobile-friendly)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   return (
     <div className="relative z-10 flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[color:var(--bg-elevated)]/60 backdrop-blur-md">
-        <div className="px-5 py-5 border-b border-[var(--border-subtle)]">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-400 flex items-center justify-center font-bold text-white">
-              A
-            </div>
-            <div>
-              <div className="font-semibold tracking-tight">AgentHub AI</div>
-              <div className="text-[10px] uppercase tracking-wider text-cyan-400/70">
-                powered by Aicoo
+      {/* ── Collapsed sidebar rail (always visible on md+) ──────────── */}
+      <aside
+        className={`hidden md:flex shrink-0 flex-col border-r border-[var(--border-subtle)] bg-[color:var(--bg-elevated)]/60 backdrop-blur-md transition-all duration-300 ease-[var(--ease-out)] ${
+          sidebarOpen ? "w-60" : "w-14"
+        }`}
+      >
+        {/* Toggle / Brand */}
+        <div className={`flex items-center border-b border-[var(--border-subtle)] ${sidebarOpen ? "px-5 py-5" : "px-3 py-5 justify-center"}`}>
+          <button
+            onClick={() => setSidebarOpen((o) => !o)}
+            className="flex items-center gap-2 text-[color:var(--text-secondary)] hover:text-white transition-colors"
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <HamburgerIcon open={sidebarOpen} />
+            {sidebarOpen && (
+              <div className="ml-1 flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-400 flex items-center justify-center font-bold text-white text-sm">
+                  A
+                </div>
+                <div>
+                  <div className="font-semibold tracking-tight text-sm text-white">AgentHub AI</div>
+                  <div className="text-[9px] uppercase tracking-wider text-cyan-400/70">powered by Aicoo</div>
+                </div>
               </div>
-            </div>
-          </Link>
+            )}
+          </button>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
+
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {NAV.map((item) => {
             const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
+              item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                title={item.label}
+                className={`flex items-center gap-3 rounded-lg text-sm transition-colors ${
+                  sidebarOpen ? "px-3 py-2" : "px-0 py-2 justify-center"
+                } ${
                   active
                     ? "bg-purple-500/20 text-purple-200"
                     : "text-[color:var(--text-secondary)] hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <Icon name={item.icon} />
-                {item.label}
+                {sidebarOpen && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
-        <div className="px-5 py-4 border-t border-[var(--border-subtle)] text-xs text-[color:var(--text-muted)]">
-          <div className="flex items-center gap-2">
+
+        {/* Backend status */}
+        <div className={`border-t border-[var(--border-subtle)] text-xs text-[color:var(--text-muted)] ${sidebarOpen ? "px-5 py-4" : "px-2 py-4 text-center"}`}>
+          <div className={`flex items-center gap-2 ${sidebarOpen ? "" : "justify-center"}`}>
             <span
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2 h-2 rounded-full shrink-0 ${
                 backendStatus === "online"
                   ? "bg-emerald-400"
                   : backendStatus === "demo"
@@ -150,16 +202,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   : "bg-zinc-500 animate-pulse"
               }`}
             />
-            {backendStatus === "online"
-              ? "Backend connected"
-              : backendStatus === "demo"
-              ? "Demo mode"
-              : "Checking backend…"}
+            {sidebarOpen && (
+              <span>
+                {backendStatus === "online"
+                  ? "Backend connected"
+                  : backendStatus === "demo"
+                  ? "Demo mode"
+                  : "Checking backend…"}
+              </span>
+            )}
           </div>
         </div>
       </aside>
 
-      {/* Mobile header */}
+      {/* ── Mobile header ──────────────────────────────────────────── */}
       <div className="md:hidden fixed top-0 inset-x-0 z-30 glass border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2">
@@ -168,38 +224,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="font-semibold">AgentHub AI</span>
           </Link>
-          <a
-            href="#mobile-nav"
-            onClick={(e) => {
-              e.preventDefault();
-              const el = document.getElementById("mobile-nav");
-              if (el) el.classList.toggle("hidden");
-            }}
+          <button
+            onClick={() => setSidebarOpen((o) => !o)}
             className="btn-ghost px-3 py-1.5 rounded-md text-sm"
+            aria-label="Toggle menu"
           >
-            Menu
-          </a>
+            <HamburgerIcon open={sidebarOpen} />
+          </button>
         </div>
-        <div id="mobile-nav" className="hidden border-t border-[var(--border-subtle)] px-3 py-2">
-          {NAV.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                  active ? "bg-purple-500/20 text-purple-200" : "text-[color:var(--text-secondary)]"
-                }`}
-              >
-                <Icon name={item.icon} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
+        {sidebarOpen && (
+          <div className="border-t border-[var(--border-subtle)] px-3 py-2">
+            {NAV.map((item) => {
+              const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
+                    active ? "bg-purple-500/20 text-purple-200" : "text-[color:var(--text-secondary)]"
+                  }`}
+                >
+                  <Icon name={item.icon} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Main */}
+      {/* ── Main content ───────────────────────────────────────────── */}
       <main className="flex-1 min-w-0 md:pt-0 pt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</div>
       </main>

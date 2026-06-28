@@ -182,7 +182,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Capabilities block (flow + agents + features) ──────────────── */}
-      <section className="space-y-10">
+      <section className="space-y-6">
         {/* Flow + Agents combo header */}
         <div className="text-center">
           <div className="inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.18em]">
